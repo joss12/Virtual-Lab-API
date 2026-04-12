@@ -49,3 +49,10 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.CreatedAt)
 	return u, err
 }
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, id pgtype.UUID, passwordHash string) error {
+	_, err := q.db.Exec(ctx, `
+		UPDATE users SET password_hash = $1 WHERE id = $2
+	`, passwordHash, id)
+	return err
+}

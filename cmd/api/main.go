@@ -57,12 +57,11 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticate)
-
 		r.Get("/quiz/scores", handler.GetScores(q))
 		r.Post("/quiz/score", handler.SaveScore(q))
-
 		r.Get("/progress", handler.GetProgress(q))
 		r.Post("/progress/{component}", handler.UpdateProgress(q))
+		r.Put("/auth/password", handler.ChangePassword(q))
 	})
 
 	port := os.Getenv("PORT")
