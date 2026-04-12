@@ -60,3 +60,15 @@ func GetScores(q *db.Queries) http.HandlerFunc {
 		writeJSON(w, http.StatusOK, scores)
 	}
 }
+
+func GetLeaderboard(q *db.Queries) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		entries, err := q.GetLeaderboard(r.Context())
+		if err != nil {
+			log.Printf("GetLeaderboard error: %v", err)
+			writeError(w, http.StatusInternalServerError, "could not fetch leaderboard")
+			return
+		}
+		writeJSON(w, http.StatusOK, entries)
+	}
+}

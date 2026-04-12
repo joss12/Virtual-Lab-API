@@ -53,6 +53,7 @@ func main() {
 
 	r.Post("/auth/register", handler.Register(q))
 	r.Post("/auth/login", handler.Login(q))
+	r.Get("/leaderboard", handler.GetLeaderboard(q))
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticate)

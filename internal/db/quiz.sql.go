@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -51,4 +52,44 @@ func (q *Queries) GetUserScores(ctx context.Context, userID pgtype.UUID) ([]Quiz
 		scores = []QuizScore{}
 	}
 	return scores, nil
+}
+
+type LeaderboardEntry struct {
+	Rank      int       `json:"rank"`
+	Email     string    `json:"email"`
+	Score     int32     `json:"score"`
+	Total     int32     `json:"total"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetLeaderboard(ctx context.Context) ([]LeaderboardEntry, error) {
+	rows, err := q.db.Query(ctx, `
+    SELECT
+        RANK() OVER (ORDER BY qs.score DESC, qs.created_at ASC) as rank,
+        u.email,
+        qs.score,
+        qs.total,
+        qs.created_at
+    FROM quiz_scores qs
+    JOIN users u ON u.id = qs.user_id
+    ORDER BY qs.score DESC, qs.created_at ASC
+    LIMIT 10
+`)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var entries []LeaderboardEntry
+	for rows.Next() {
+		var e LeaderboardEntry
+		if err := rows.Scan(&e.Rank, &e.Email, &e.Score, &e.Total, &e.CreatedAt); err != nil {
+			return nil, err
+		}
+		entries = append(entries, e)
+	}
+	if entries == nil {
+		entries = []LeaderboardEntry{}
+	}
+	return entries, nil
 }
