@@ -56,6 +56,8 @@ func main() {
 	r.Get("/leaderboard", handler.GetLeaderboard(q))
 	r.Get("/auth/github", handler.GithubLogin())
 	r.Get("/auth/github/callback", handler.GithubCallback(q))
+	r.Post("/auth/forgot", handler.ForgotPassword(q))
+	r.Post("/auth/reset", handler.ResetPassword(q))
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticate)
