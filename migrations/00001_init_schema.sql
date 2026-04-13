@@ -30,6 +30,7 @@ CREATE TABLE progress (
 CREATE INDEX idx_quiz_scores_user ON quiz_scores(user_id);
 CREATE INDEX idx_progress_user    ON progress(user_id);
 
+
 -- +goose Down
 DROP TABLE IF EXISTS progress;
 DROP TABLE IF EXISTS quiz_scores;

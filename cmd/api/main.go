@@ -54,6 +54,8 @@ func main() {
 	r.Post("/auth/register", handler.Register(q))
 	r.Post("/auth/login", handler.Login(q))
 	r.Get("/leaderboard", handler.GetLeaderboard(q))
+	r.Get("/auth/github", handler.GithubLogin())
+	r.Get("/auth/github/callback", handler.GithubCallback(q))
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticate)
@@ -62,6 +64,7 @@ func main() {
 		r.Get("/progress", handler.GetProgress(q))
 		r.Post("/progress/{component}", handler.UpdateProgress(q))
 		r.Put("/auth/password", handler.ChangePassword(q))
+
 	})
 
 	port := os.Getenv("PORT")
