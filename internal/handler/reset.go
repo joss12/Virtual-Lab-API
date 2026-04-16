@@ -1,14 +1,13 @@
 package handler
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"time"
 
@@ -25,40 +24,44 @@ func generateToken() (string, error) {
 }
 
 func sendResetEmail(toEmail, resetURL string) error {
-	apiKey := os.Getenv("RESEND_API_KEY")
-	payload := map[string]any{
-		"from":    "vlab <onboarding@resend.dev>",
-		"to":      []string{toEmail},
-		"subject": "Reset your vlab password",
-		"html": fmt.Sprintf(`
-			<div style="font-family:monospace;max-width:480px;margin:0 auto;padding:32px;background:#0d1420;color:#ddeeff;">
-				<h2 style="margin:0 0 16px;font-size:20px;">Reset your password</h2>
-				<p style="color:rgba(180,210,240,.7);line-height:1.7;margin:0 0 24px;">
-					Click the button below to reset your vlab password. This link expires in 1 hour.
-				</p>
-				<a href="%s" style="display:inline-block;padding:12px 24px;background:#2563eb;color:white;text-decoration:none;border-radius:6px;font-family:monospace;font-size:14px;">
-					Reset Password
-				</a>
-				<p style="color:rgba(180,210,240,.4);font-size:11px;margin:24px 0 0;">
-					If you did not request this, ignore this email. Your password will not change.
-				</p>
-			</div>
-		`, resetURL),
-	}
+	host := os.Getenv("SMTP_HOST")
+	port := os.Getenv("SMTP_PORT")
+	user := os.Getenv("SMTP_USER")
+	pass := os.Getenv("SMTP_PASS")
 
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewReader(body))
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("Content-Type", "application/json")
+	auth := smtp.PlainAuth("", user, pass, host)
 
-	resp, err := http.DefaultClient.Do(req)
+	body := fmt.Sprintf(`From: vlab <%s>
+To: %s
+Subject: Reset your vlab password
+MIME-Version: 1.0
+Content-Type: text/html; charset="UTF-8"
+
+<!DOCTYPE html>
+<html>
+<body style="font-family:monospace;max-width:480px;margin:0 auto;padding:32px;background:#0d1420;color:#ddeeff;">
+  <h2 style="margin:0 0 16px;font-size:20px;">Reset your password</h2>
+  <p style="color:rgba(180,210,240,.7);line-height:1.7;margin:0 0 24px;">
+    Click the button below to reset your vlab password. This link expires in 1 hour.
+  </p>
+  <a href="%s" style="display:inline-block;padding:12px 24px;background:#2563eb;color:white;text-decoration:none;border-radius:6px;font-family:monospace;font-size:14px;">
+    Reset Password
+  </a>
+  <p style="color:rgba(180,210,240,.4);font-size:11px;margin:24px 0 0;">
+    If you did not request this, ignore this email. Your password will not change.
+  </p>
+</body>
+</html>`, user, toEmail, resetURL)
+
+	err := smtp.SendMail(
+		host+":"+port,
+		auth,
+		user,
+		[]string{toEmail},
+		[]byte(body),
+	)
 	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		return fmt.Errorf("resend API error: %d", resp.StatusCode)
+		return fmt.Errorf("smtp error: %v", err)
 	}
 	return nil
 }
