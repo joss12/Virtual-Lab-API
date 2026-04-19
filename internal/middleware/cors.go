@@ -10,7 +10,6 @@ import (
 
 func CORS() func(http.Handler) http.Handler {
 	origins := []string{"http://localhost:3000"}
-
 	if extra := os.Getenv("FRONTEND_URL"); extra != "" {
 		for o := range strings.SplitSeq(extra, ",") {
 			origins = append(origins, strings.TrimSpace(o))
