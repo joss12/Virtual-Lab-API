@@ -48,7 +48,7 @@ func sendResetEmail(toEmail, resetURL string) error {
 	escapedHTML = strings.ReplaceAll(escapedHTML, "\n", "\\n")
 
 	payload := fmt.Sprintf(`{
-		"from": "vlab <onboarding@resend.dev>",
+		"from": "vlab <noreply@mail.eddymouity.dev>",
 		"to": ["%s"],
 		"subject": "Reset your vlab password",
 		"html": "%s"
