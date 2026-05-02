@@ -5,10 +5,11 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"net/smtp"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/vlab-api/internal/db"
@@ -24,20 +25,9 @@ func generateToken() (string, error) {
 }
 
 func sendResetEmail(toEmail, resetURL string) error {
-	host := os.Getenv("SMTP_HOST")
-	port := os.Getenv("SMTP_PORT")
-	user := os.Getenv("SMTP_USER")
-	pass := os.Getenv("SMTP_PASS")
+	apiKey := os.Getenv("RESEND_API_KEY")
 
-	auth := smtp.PlainAuth("", user, pass, host)
-
-	body := fmt.Sprintf(`From: vlab <%s>
-To: %s
-Subject: Reset your vlab password
-MIME-Version: 1.0
-Content-Type: text/html; charset="UTF-8"
-
-<!DOCTYPE html>
+	html := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <body style="font-family:monospace;max-width:480px;margin:0 auto;padding:32px;background:#0d1420;color:#ddeeff;">
   <h2 style="margin:0 0 16px;font-size:20px;">Reset your password</h2>
@@ -51,18 +41,37 @@ Content-Type: text/html; charset="UTF-8"
     If you did not request this, ignore this email. Your password will not change.
   </p>
 </body>
-</html>`, user, toEmail, resetURL)
+</html>`, resetURL)
 
-	err := smtp.SendMail(
-		host+":"+port,
-		auth,
-		user,
-		[]string{toEmail},
-		[]byte(body),
-	)
+	// Escape quotes in HTML for JSON embedding
+	escapedHTML := strings.ReplaceAll(html, `"`, `\"`)
+	escapedHTML = strings.ReplaceAll(escapedHTML, "\n", "\\n")
+
+	payload := fmt.Sprintf(`{
+		"from": "vlab <onboarding@resend.dev>",
+		"to": ["%s"],
+		"subject": "Reset your vlab password",
+		"html": "%s"
+	}`, toEmail, escapedHTML)
+
+	req, err := http.NewRequest("POST", "https://api.resend.com/emails", strings.NewReader(payload))
 	if err != nil {
-		return fmt.Errorf("smtp error: %v", err)
+		return fmt.Errorf("resend request error: %v", err)
 	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("resend send error: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("resend API error (%d): %s", resp.StatusCode, string(respBody))
+	}
+
 	return nil
 }
 
