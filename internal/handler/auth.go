@@ -16,7 +16,8 @@ type authRequest struct {
 }
 
 type authResponse struct {
-	Token string `json:"token"`
+	Token     string `json:"token"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 func Register(q *db.Queries) http.HandlerFunc {
@@ -55,7 +56,10 @@ func Register(q *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusCreated, authResponse{Token: token})
+		writeJSON(w, http.StatusOK, authResponse{
+			Token:     token,
+			AvatarURL: GravatarURL(user.Email),
+		})
 	}
 }
 
@@ -86,7 +90,10 @@ func Login(q *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, authResponse{Token: token})
+		writeJSON(w, http.StatusCreated, authResponse{
+			Token:     token,
+			AvatarURL: GravatarURL(req.Email),
+		})
 	}
 }
 
