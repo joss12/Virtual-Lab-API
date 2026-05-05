@@ -14,36 +14,36 @@ type CreateUserParams struct {
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, `
-		INSERT INTO users (email, password_hash)
-		VALUES ($1, $2)
-		RETURNING id, email, password_hash, github_id, created_at
-	`, arg.Email, arg.PasswordHash)
+    INSERT INTO users (email, password_hash)
+    VALUES ($1, $2)
+    RETURNING id, email, password_hash, github_id, email_verified, created_at
+`, arg.Email, arg.PasswordHash)
 	var u User
-	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.GithubID, &u.CreatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.GithubID, &u.EmailVerified, &u.CreatedAt)
 	return u, err
 }
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRow(ctx, `
-		SELECT id, email, password_hash, github_id, created_at
-		FROM users
-		WHERE email = $1
-		LIMIT 1
-	`, email)
+    SELECT id, email, password_hash, github_id, email_verified, created_at
+    FROM users
+    WHERE email = $1
+    LIMIT 1
+`, email)
 	var u User
-	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.GithubID, &u.CreatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.GithubID, &u.EmailVerified, &u.CreatedAt)
 	return u, err
 }
 
 func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, `
-		SELECT id, email, password_hash, github_id, created_at
+		SELECT id, email, password_hash, github_id, email_verified, created_at
 		FROM users
 		WHERE id = $1
 		LIMIT 1
 	`, id)
 	var u User
-	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.GithubID, &u.CreatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.GithubID, &u.EmailVerified, &u.CreatedAt)
 	return u, err
 }
 

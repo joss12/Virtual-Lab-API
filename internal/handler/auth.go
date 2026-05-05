@@ -27,19 +27,16 @@ func Register(q *db.Queries) http.HandlerFunc {
 			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
-
 		req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 		if req.Email == "" || len(req.Password) < 8 {
 			writeError(w, http.StatusBadRequest, "email required and password must be at least 8 characters")
 			return
 		}
-
 		hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), 12)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "server error")
 			return
 		}
-
 		user, err := q.CreateUser(r.Context(), db.CreateUserParams{
 			Email:        req.Email,
 			PasswordHash: string(hash),
@@ -50,19 +47,19 @@ func Register(q *db.Queries) http.HandlerFunc {
 			return
 		}
 
+		SendVerificationOnRegister(q, user.ID, user.Email)
+
 		token, err := middleware.IssueToken(user.ID.String())
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not issue token")
 			return
 		}
-
-		writeJSON(w, http.StatusOK, authResponse{
+		writeJSON(w, http.StatusCreated, authResponse{
 			Token:     token,
 			AvatarURL: GravatarURL(user.Email),
 		})
 	}
 }
-
 func Login(q *db.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req authRequest

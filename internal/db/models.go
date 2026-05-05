@@ -8,11 +8,12 @@ import (
 )
 
 type User struct {
-	ID           pgtype.UUID `json:"id"`
-	Email        string      `json:"email"`
-	PasswordHash string      `json:"-"`
-	GithubID     pgtype.Text `json:"github_id"`
-	CreatedAt    time.Time   `json:"created_at"`
+	ID            pgtype.UUID `json:"id"`
+	Email         string      `json:"email"`
+	PasswordHash  string      `json:"-"`
+	GithubID      pgtype.Text `json:"github_id"`
+	EmailVerified bool        `json:"email_verified"`
+	CreatedAt     time.Time   `json:"created_at"`
 }
 
 type QuizScore struct {

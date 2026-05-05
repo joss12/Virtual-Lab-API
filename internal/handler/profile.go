@@ -15,11 +15,12 @@ func GravatarURL(email string) string {
 	return fmt.Sprintf("https://www.gravatar.com/avatar/%x?d=identicon&s=200", hash)
 }
 
-type ProfileResponse struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	AvatarURL string `json:"avatar_url"`
-	CreatedAt string `json:"created_at"`
+type profileResponse struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	AvatarURL     string `json:"avatar_url"`
+	EmailVerified bool   `json:"email_verified"`
+	CreatedAt     string `json:"created_at"`
 }
 
 func GetMe(q *db.Queries) http.HandlerFunc {
@@ -32,11 +33,12 @@ func GetMe(q *db.Queries) http.HandlerFunc {
 			return
 		}
 
-		writeJSON(w, http.StatusOK, ProfileResponse{
-			ID:        user.ID.String(),
-			Email:     user.Email,
-			AvatarURL: GravatarURL(user.Email),
-			CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		writeJSON(w, http.StatusOK, profileResponse{
+			ID:            user.ID.String(),
+			Email:         user.Email,
+			AvatarURL:     GravatarURL(user.Email),
+			EmailVerified: user.EmailVerified,
+			CreatedAt:     user.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		})
 	}
 }

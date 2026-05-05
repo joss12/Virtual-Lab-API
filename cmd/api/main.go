@@ -67,6 +67,7 @@ func main() {
 		r.Post("/progress/{component}", handler.UpdateProgress(q))
 		r.Put("/auth/password", handler.ChangePassword(q))
 		r.Get("/me", handler.GetMe(q))
+		r.Get("/auth/verify", handler.VerifyEmail(q))
 
 	})
 
