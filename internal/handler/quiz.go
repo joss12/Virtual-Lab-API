@@ -61,6 +61,15 @@ func GetScores(q *db.Queries) http.HandlerFunc {
 	}
 }
 
+type leaderboardResponse struct {
+	Rank      int    `json:"rank"`
+	Email     string `json:"email"`
+	Score     int32  `json:"score"`
+	Total     int32  `json:"total"`
+	CreatedAt string `json:"created_at"`
+	AvatarURL string `json:"avatar_url"`
+}
+
 func GetLeaderboard(q *db.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		entries, err := q.GetLeaderboard(r.Context())
@@ -69,6 +78,19 @@ func GetLeaderboard(q *db.Queries) http.HandlerFunc {
 			writeError(w, http.StatusInternalServerError, "could not fetch leaderboard")
 			return
 		}
-		writeJSON(w, http.StatusOK, entries)
+
+		resp := make([]leaderboardResponse, len(entries))
+		for i, e := range entries {
+			resp[i] = leaderboardResponse{
+				Rank:      e.Rank,
+				Email:     e.Email,
+				Score:     e.Score,
+				Total:     e.Total,
+				CreatedAt: e.CreatedAt.Format("2006-01-02T15:04:05Z"),
+				AvatarURL: GravatarURL(e.Email),
+			}
+		}
+
+		writeJSON(w, http.StatusOK, resp)
 	}
 }

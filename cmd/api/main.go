@@ -59,6 +59,11 @@ func main() {
 	r.Post("/auth/forgot", handler.ForgotPassword(q))
 	r.Post("/auth/reset", handler.ResetPassword(q))
 
+	r.Get("/os/courses", handler.GetOsCourses(q))
+	r.Get("/os/courses/{course}/lessons", handler.GetOsLessons(q))
+	r.Get("/os/lessons/{lesson}", handler.GetOsLesson(q))
+	r.Get("/os/lessons/{lesson}/quiz", handler.GetOsQuiz(q))
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticate)
 		r.Get("/quiz/scores", handler.GetScores(q))
@@ -68,6 +73,8 @@ func main() {
 		r.Put("/auth/password", handler.ChangePassword(q))
 		r.Get("/me", handler.GetMe(q))
 		r.Get("/auth/verify", handler.VerifyEmail(q))
+		r.Get("/os/progress", handler.GetOsProgress(q))
+		r.Post("/os/progress", handler.UpdateOsProgress(q))
 
 	})
 
