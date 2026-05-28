@@ -20,37 +20,30 @@ import (
 
 func main() {
 	_ = godotenv.Load()
-
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL is required")
 	}
-
 	pool, err := pgxpool.New(context.Background(), dbURL)
 	if err != nil {
 		log.Fatalf("cannot connect to database: %v", err)
 	}
 	defer pool.Close()
-
 	if err := pool.Ping(context.Background()); err != nil {
 		log.Fatalf("database ping failed: %v", err)
 	}
 	log.Println("✓ database connected")
-
 	q := db.NewPool(pool)
-
 	r := chi.NewRouter()
 	r.Use(chiMiddleware.Logger)
 	r.Use(chiMiddleware.Recoverer)
 	r.Use(chiMiddleware.RealIP)
 	r.Use(chiMiddleware.Timeout(30 * time.Second))
 	r.Use(middleware.CORS())
-
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok","service":"vlab-api"}`))
 	})
-
 	r.Post("/auth/register", handler.Register(q))
 	r.Post("/auth/login", handler.Login(q))
 	r.Get("/leaderboard", handler.GetLeaderboard(q))
@@ -58,12 +51,10 @@ func main() {
 	r.Get("/auth/github/callback", handler.GithubCallback(q))
 	r.Post("/auth/forgot", handler.ForgotPassword(q))
 	r.Post("/auth/reset", handler.ResetPassword(q))
-
 	r.Get("/os/courses", handler.GetOsCourses(q))
 	r.Get("/os/courses/{course}/lessons", handler.GetOsLessons(q))
 	r.Get("/os/lessons/{lesson}", handler.GetOsLesson(q))
 	r.Get("/os/lessons/{lesson}/quiz", handler.GetOsQuiz(q))
-
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.Authenticate)
 		r.Get("/quiz/scores", handler.GetScores(q))
@@ -75,18 +66,14 @@ func main() {
 		r.Get("/auth/verify", handler.VerifyEmail(q))
 		r.Get("/os/progress", handler.GetOsProgress(q))
 		r.Post("/os/progress", handler.UpdateOsProgress(q))
-
 		r.Get("/learn/progress/summary", handler.GetLearnProgressSummary(q))
-		r.Get("/learn/{language}/progress", handler.GetLeaderboard(q))
+		r.Get("/learn/{language}/progress", handler.GetLearnProgress(q))
 		r.Post("/learn/{language}/progress", handler.UpdateLearnProgress(q))
-
 	})
-
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8089"
 	}
-
 	srv := &http.Server{
 		Addr:         ":" + port,
 		Handler:      r,
@@ -94,18 +81,15 @@ func main() {
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
-
 	go func() {
 		log.Printf("✓ server listening on :%s\n", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}
 	}()
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-
 	log.Println("shutting down...")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
