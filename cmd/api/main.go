@@ -76,6 +76,10 @@ func main() {
 		r.Get("/os/progress", handler.GetOsProgress(q))
 		r.Post("/os/progress", handler.UpdateOsProgress(q))
 
+		r.Get("/learn/progress/summary", handler.GetLearnProgressSummary(q))
+		r.Get("/learn/{language}/progress", handler.GetLeaderboard(q))
+		r.Post("/learn/{language}/progress", handler.UpdateLearnProgress(q))
+
 	})
 
 	port := os.Getenv("PORT")
